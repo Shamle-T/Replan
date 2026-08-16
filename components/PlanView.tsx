@@ -77,6 +77,11 @@ export default function PlanView({
     const task = tasks.find((item) => item.id === entry.taskId);
     return entry.type !== "unchanged" && Boolean(task) && !task?.fixedStart;
   });
+  const fixedCommitments = active
+    .filter((task) => task.fixedStart && task.fixedEnd)
+    .map((task) => ({ task, placement: schedule.find((item) => item.taskId === task.id) }))
+    .filter((item): item is { task: Task; placement: ScheduledTask } => Boolean(item.placement))
+    .sort((a, b) => a.placement.start.getTime() - b.placement.start.getTime());
   const optimizationExplanationMap = new Map(
     optimizationExplanations.map((item) => [item.taskId, item]),
   );
@@ -219,31 +224,52 @@ export default function PlanView({
               <div className="optimization-result-head">
                 <div>
                   <span>Day optimized</span>
-                  <strong>{optimizationChanges.length} schedule update{optimizationChanges.length === 1 ? "" : "s"}</strong>
+                  <strong>{optimizationChanges.length} moved · {fixedCommitments.length} fixed</strong>
                 </div>
                 <button type="button" onClick={onDismissOptimizationNotice} aria-label="Dismiss optimization summary">×</button>
               </div>
-              <div className="optimization-result-list">
-                {optimizationChanges.slice(0, 6).map((entry) => {
-                  const task = tasks.find((item) => item.id === entry.taskId);
-                  if (!task || task.fixedStart || entry.type === "unchanged") return null;
-                  return (
-                    <div className="optimization-result-row optimization-result-row-explain" key={`${entry.taskId}-${entry.type}`} tabIndex={0}>
+              <section className="optimization-result-section">
+                <div className="optimization-result-section-head">
+                  <strong>Moved by optimization</strong>
+                  <span>{optimizationChanges.length} flexible event{optimizationChanges.length === 1 ? "" : "s"}</span>
+                </div>
+                <div className="optimization-result-list">
+                  {optimizationChanges.slice(0, 6).map((entry) => {
+                    const task = tasks.find((item) => item.id === entry.taskId);
+                    if (!task || task.fixedStart || entry.type === "unchanged") return null;
+                    return (
+                      <div className="optimization-result-row optimization-result-row-explain" key={`${entry.taskId}-${entry.type}`} tabIndex={0}>
+                        <strong>{task.title}</strong>
+                        <span>{formatOptimizationMove(entry)}</span>
+                        {optimizationExplanationMap.get(entry.taskId) ? (
+                          <div className="optimization-reason-tooltip" role="tooltip">
+                            <strong>Why Replan moved it</strong>
+                            <p>{optimizationExplanationMap.get(entry.taskId)?.summary}</p>
+                            {optimizationExplanationMap.get(entry.taskId)?.details.slice(0, 2).map((detail, index) => (
+                              <small key={`${entry.taskId}-reason-${index}`}>{detail}</small>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+                {optimizationChanges.length > 6 ? <span className="more-changes">+{optimizationChanges.length - 6} more moved events</span> : null}
+              </section>
+              <section className="optimization-result-section optimization-fixed-section">
+                <div className="optimization-result-section-head">
+                  <strong>Fixed commitments</strong>
+                  <span>Stayed anchored</span>
+                </div>
+                <div className="optimization-result-list">
+                  {fixedCommitments.map(({ task, placement }) => (
+                    <div className="optimization-result-row optimization-fixed-row" key={task.id}>
                       <strong>{task.title}</strong>
-                      <span>{formatOptimizationMove(entry)}</span>
-                      {optimizationExplanationMap.get(entry.taskId) ? (
-                        <div className="optimization-reason-tooltip" role="tooltip">
-                          <strong>Why Replan moved it</strong>
-                          <p>{optimizationExplanationMap.get(entry.taskId)?.summary}</p>
-                          {optimizationExplanationMap.get(entry.taskId)?.details.slice(0, 2).map((detail, index) => (
-                            <small key={`${entry.taskId}-reason-${index}`}>{detail}</small>
-                          ))}
-                        </div>
-                      ) : null}
+                      <span>{formatTime(placement.start)} → {formatTime(placement.end)} · Fixed</span>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              </section>
             </aside>
           ) : null}
 

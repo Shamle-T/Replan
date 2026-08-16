@@ -2055,6 +2055,35 @@ input:disabled { color: #9da0a8; background: #f7f7f9; }
   display: grid;
   gap: 6px;
 }
+.optimization-result-section + .optimization-result-section {
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(101,88,232,.16);
+}
+.optimization-result-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.optimization-result-section-head strong {
+  color: #37316f;
+  font-size: 10px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.optimization-result-section-head span {
+  color: #77728f;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+}
+.optimization-fixed-row {
+  background: rgba(239,237,255,.72);
+}
+.optimization-fixed-row span {
+  color: #6558e8;
+}
 .optimization-result-row {
   min-height: 36px;
   padding: 7px 9px;
