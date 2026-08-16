@@ -35,33 +35,6 @@ button {
   cursor: pointer;
 }
 
-.foundation-shell {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-
-.foundation-card {
-  width: min(560px, 100%);
-  padding: 32px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.foundation-card h1 {
-  margin: 4px 0 12px;
-  font-size: clamp(2rem, 7vw, 3.5rem);
-  letter-spacing: -0.04em;
-}
-
-.foundation-card p:last-child {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.6;
-}
-
 .eyebrow {
   margin: 0;
   color: var(--accent);

@@ -60,11 +60,6 @@ export function loadReplanState(): PersistedReplanState | null {
   }
 }
 
-export function clearReplanState(): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(STORAGE_KEY);
-}
-
 function serializeTask(task: Task): PersistedTask {
   return {
     ...task,

@@ -1,40 +1,9 @@
-import { addMinutes, minutesBetween } from "../scheduler/slots";
+import { minutesBetween } from "../scheduler/slots";
 import type {
   ScheduleChange,
   ScheduledTask,
   Task,
 } from "../scheduler/types";
-
-export function makeCompletedChange(
-  taskId: string,
-  currentTime: Date,
-): ScheduleChange {
-  return {
-    type: "TASK_COMPLETED",
-    taskId,
-    actualEnd: new Date(currentTime.getTime()),
-  };
-}
-
-export function makeOverrunChange(
-  taskId: string,
-  placement: ScheduledTask,
-  extraMinutes: 15 | 30,
-): ScheduleChange {
-  return {
-    type: "TASK_OVERRUN",
-    taskId,
-    newExpectedEnd: addMinutes(placement.end, extraMinutes),
-  };
-}
-
-export function makeCancelChange(taskId: string): ScheduleChange {
-  return { type: "TASK_CANCELLED", taskId };
-}
-
-export function makeSkipChange(taskId: string): ScheduleChange {
-  return { type: "TASK_SKIPPED", taskId };
-}
 
 export function applyChangeToTasks(
   tasks: Task[],
