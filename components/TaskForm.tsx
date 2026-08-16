@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type {
   ScheduledTask,
   Task,
@@ -9,6 +9,7 @@ import type {
 } from "../scheduler";
 import { addMinutes } from "../scheduler";
 import { dateFromTimeInput, timeInputValue } from "../lib/time";
+import { deriveFixedEnd, fixedDurationMinutes } from "../lib/taskTiming";
 import { TASK_CATEGORIES } from "../lib/taskCategories";
 import { fetchWeatherConstraints, type WeatherTaskStatus } from "../lib/weather";
 import { PRIORITY_CHOICES, normalizePriority, type PriorityChoice } from "../lib/taskPriorities";
@@ -51,7 +52,10 @@ export default function TaskForm({
   const [kind, setKind] = useState<TaskKind>(initialTask?.fixedStart ? "fixed" : "flexible");
   const [title, setTitle] = useState(initialTask?.title ?? "");
   const [description, setDescription] = useState(initialTask?.description ?? "");
-  const initialDuration = initialTask?.durationMinutes ?? 60;
+  const initialFixedDuration = fixedDurationMinutes(initialTask?.fixedStart, initialTask?.fixedEnd);
+  const initialDuration = initialTask?.fixedStart
+    ? initialFixedDuration || initialTask.durationMinutes || 60
+    : initialTask?.durationMinutes ?? 60;
   const initialUsesPreset = DURATION_PRESETS.includes(initialDuration as (typeof DURATION_PRESETS)[number]);
   const [duration, setDuration] = useState(initialUsesPreset ? initialDuration : 60);
   const [durationMode, setDurationMode] = useState<DurationMode>(initialUsesPreset ? "preset" : "custom");
@@ -66,7 +70,6 @@ export default function TaskForm({
   const [earliest, setEarliest] = useState(timeInputValue(initialTask?.earliestStart));
   const [latest, setLatest] = useState(timeInputValue(initialTask?.latestEnd));
   const [fixedStart, setFixedStart] = useState(timeInputValue(initialTask?.fixedStart));
-  const [fixedEnd, setFixedEnd] = useState(timeInputValue(initialTask?.fixedEnd));
   const [scheduledStart, setScheduledStart] = useState(
     !initialTask?.fixedStart ? timeInputValue(initialPlacement?.start) : "",
   );
@@ -80,18 +83,15 @@ export default function TaskForm({
   const [pendingOutdoorSave, setPendingOutdoorSave] = useState<PendingOutdoorSave | null>(null);
   const [error, setError] = useState("");
 
-  const fixedDuration = useMemo(() => {
-    const start = dateFromTimeInput(baseDate, fixedStart);
-    const end = dateFromTimeInput(baseDate, fixedEnd);
-    if (!start || !end || end <= start) return 0;
-    return Math.round((end.getTime() - start.getTime()) / 60_000);
-  }, [baseDate, fixedStart, fixedEnd]);
+  const effectiveDuration = durationMode === "custom" ? Number(customDuration) : duration;
+  const derivedFixedEnd = deriveFixedEnd(baseDate, fixedStart, effectiveDuration);
+  const fixedEnd = timeInputValue(derivedFixedEnd);
 
   const weatherFormSignature = [
     kind,
     title.trim(),
     durationMode,
-    durationMode === "custom" ? customDuration : duration,
+    effectiveDuration,
     intervalMode,
     customInterval,
     fixedStart,
@@ -131,6 +131,10 @@ export default function TaskForm({
       setError("Travel time after the event must be between 0 and 180 minutes.");
       return null;
     }
+    if (!Number.isInteger(effectiveDuration) || effectiveDuration <= 0 || effectiveDuration > 720) {
+      setError("Choose a duration between 1 and 720 minutes.");
+      return null;
+    }
 
     const id = initialTask?.id ?? `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const shared = {
@@ -155,24 +159,19 @@ export default function TaskForm({
 
     if (kind === "fixed") {
       const start = dateFromTimeInput(baseDate, fixedStart);
-      const end = dateFromTimeInput(baseDate, fixedEnd);
-      if (!start || !end || end <= start) {
-        setError("Choose a valid start and end time.");
+      const end = deriveFixedEnd(baseDate, fixedStart, effectiveDuration);
+      if (!start || !end) {
+        setError("Choose a valid fixed start and duration.");
         return null;
       }
       task = {
         ...shared,
-        durationMinutes: fixedDuration,
+        durationMinutes: effectiveDuration,
         fixedStart: start,
         fixedEnd: end,
       };
       placement = { taskId: id, start, end };
     } else {
-      if (!Number.isInteger(effectiveDuration) || effectiveDuration <= 0 || effectiveDuration > 720) {
-        setError("Choose a duration between 1 and 720 minutes.");
-        return null;
-      }
-
       const earliestDate = dateFromTimeInput(baseDate, earliest);
       const latestDate = dateFromTimeInput(baseDate, latest);
       const deadlineDate = dateFromTimeInput(baseDate, deadline);
@@ -364,8 +363,7 @@ export default function TaskForm({
       </label>
 
       <div className="form-grid two">
-        {kind === "flexible" ? (
-          <label className="duration-field">
+        <label className="duration-field">
             Duration
             <select
               value={durationMode === "custom" ? "custom" : String(duration)}
@@ -402,13 +400,7 @@ export default function TaskForm({
                 <span>minutes</span>
               </div>
             ) : null}
-          </label>
-        ) : (
-          <label className="duration-field">
-            Duration
-            <input value={fixedDuration ? `${fixedDuration} min` : "—"} disabled />
-          </label>
-        )}
+        </label>
 
         <label>
           Priority
@@ -467,8 +459,8 @@ export default function TaskForm({
             <input type="time" value={fixedStart} onChange={(event) => setFixedStart(event.target.value)} />
           </label>
           <label>
-            End
-            <input type="time" value={fixedEnd} onChange={(event) => setFixedEnd(event.target.value)} />
+            End <span>calculated from start and duration</span>
+            <input type="time" value={fixedEnd} readOnly disabled />
           </label>
         </div>
       ) : (
