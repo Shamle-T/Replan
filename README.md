@@ -104,7 +104,7 @@ Pure TypeScript engine
   |-- diff + explanation
 ```
 
-The scheduler never reads the system clock. `currentTime`, `dayStart`, `dayEnd`, `slotMinutes`, and any fetched weather windows are explicit inputs. The React shell can supply either a real clock or the accelerated simulation clock through the same API.
+The scheduler never reads the system clock. `currentTime`, `dayStart`, `dayEnd`, and any fetched weather windows are explicit inputs. The React shell can supply either a real clock or the accelerated simulation clock through the same API.
 
 ## Scheduling model
 
@@ -136,9 +136,9 @@ Lower score is better. Ties use a stable schedule signature, so identical inputs
 
 ## Search approach
 
-The engine first places locked and fixed work. Flexible tasks are then ordered by constraint pressure (mandatory first, earlier deadlines, narrower windows, higher priority, longer duration). Normal candidate starts are generated on the 30-minute grid and illegal overlaps are removed before search.
+The engine first places locked and fixed work. Flexible tasks are then ordered by constraint pressure (mandatory first, earlier deadlines, narrower windows, higher priority, longer duration). Candidate starts are generated from exact legal boundaries: the task's current/earliest window and the edges created by fixed work, travel, buffers, and already placed tasks. There is no 15- or 30-minute scheduling grid.
 
-Live Day has one explicit transition exception: after an early completion, the user can take a 5–15-minute relax window and the already-next flexible task may be advanced to the exact minute that relax window ends if all hard constraints remain valid. This keeps the normal planning search simple while avoiding an artificial idle gap after a real-time early finish.
+Live Day uses the same minute-flexible candidate rules after an early completion, cancellation, skip, or overrun. The user can take a 5–15-minute relax window and the already-next flexible task may begin at the exact minute that window ends if all hard constraints remain valid.
 
 The optimizer uses deterministic bounded backtracking. This is appropriate for a single-day MVP with a small task count: it can reason across combinations rather than greedily accepting the first open slot, but it avoids pretending to be a production-scale solver. The search budget is explicit and a `SEARCH_LIMIT_REACHED` reason is returned if it is exhausted.
 

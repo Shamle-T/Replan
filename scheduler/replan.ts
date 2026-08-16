@@ -424,7 +424,7 @@ function optimizeAfterEarlyCompletion(
     const candidates: Array<{ result: ScheduleResult; preservesNext: boolean }> = [];
 
     // The first transition after an early finish is minute-accurate rather than
-    // forced back onto the normal 30-minute planning grid.
+    // forced onto an artificial time grid.
     if (nextOriginalPlacement) {
       const nextTask = tasks.find((task) => task.id === nextOriginalPlacement.taskId);
       if (nextTask) {

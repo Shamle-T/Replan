@@ -164,9 +164,10 @@ Simulation Mode must:
 
 ### Scheduling granularity
 
-The normal planning/optimization grid remains 30 minutes. Real/simulated current time may be minute-accurate, and ordinary candidate starts should still snap to the next valid 30-minute boundary.
-
-There is one Live Day transition exception: after a real-time change releases or shifts the current schedule (early completion, skip, cancel, or an accepted overrun), Replan may compact the **remaining flexible chain** onto exact minute boundaries, provided all hard constraints remain valid. This prevents a live change at (for example) 10:37 from wasting time until the next 30-minute planning grid line. The normal Plan/Optimize search grid remains 30 minutes; exact-minute compaction is a finishing rule for accepted Live Day replans.
+Scheduling is minute-flexible. Candidate starts must not snap to a 15- or
+30-minute grid. The engine should consider the exact legal current/earliest
+boundary plus boundaries created by fixed work, travel, buffers, and existing
+placements. Real and simulated time use the same rules.
 
 Example:
 
@@ -471,7 +472,6 @@ replanSchedule(tasks, currentSchedule, change, options)
   currentTime: Date;
   dayStart: Date;
   dayEnd: Date;
-  slotMinutes: 30;
 }
 ```
 
@@ -505,9 +505,9 @@ Define:
 - `ScheduleChange`
 - `SchedulingRequest`
 - configured working-day bounds
-- 30-minute slot policy
+- minute-flexible candidate boundary policy
 - current-time injection policy
-- snapping rule for arbitrary current times
+- exact-boundary rule for arbitrary current times
 - hard constraints
 - soft preferences
 - deterministic tie-breakers
@@ -671,7 +671,7 @@ At minimum, create deterministic tests for:
 10. cancellation
 11. minimum-disruption tie
 12. completed/past work never moves
-13. arbitrary current time snaps correctly to scheduling grid
+13. arbitrary current time remains an exact legal scheduling boundary
 14. identical inputs/currentTime produce identical outputs
 
 Simulation-speed UI tests should verify the clock changes `currentTime`; they should not test a separate scheduling algorithm.
@@ -712,5 +712,5 @@ For every agent prompt, implement only the requested stage. Run relevant tests/b
 
 - Flexible work is compact-by-default. The optimizer should avoid idle gaps between movable tasks unless a hard constraint, travel block, fixed commitment, weather window, or explicit user-requested interval requires the gap.
 - Tasks may specify `bufferMinutesAfter` as a user-requested pause after the task. The default is 0 (immediately). UI presets are Immediately, 5 min, 10 min, and Custom.
-- Candidate generation may add exact occupied-boundary placements in addition to the normal 30-minute grid so tasks can sit directly against another task/travel/buffer boundary without an artificial grid-created gap.
+- Candidate generation uses exact occupied-boundary placements so tasks can sit directly against another task/travel/buffer boundary without an artificial grid-created gap.
 - Live Day task-time controls support reversible + / - adjustments. Removing extra time is only enabled for time the user previously added during the current session.

@@ -101,9 +101,9 @@ export function compactScheduleForward(
       tasks,
     );
 
-    // Exact live-boundary placement is deliberately considered in addition to
-    // the normal planning grid. This lets a skip/cancel/early-finish at 10:37
-    // immediately reclaim 10:37 rather than waiting until 11:00.
+    // Exact live-boundary placement is deliberately considered alongside
+    // legal occupied boundaries. This lets a skip/cancel/early-finish at 10:37
+    // immediately reclaim 10:37 rather than waiting for a rounded time.
     const candidates = dedupePlacements([exactCandidate, ...generated, original])
       // A newly selected relax window may begin after a preview placement that
       // was generated at the live boundary. In that case, allow the event to

@@ -1,6 +1,5 @@
 import {
   addMinutes,
-  buildCandidateStarts,
   maxDate,
   minDate,
 } from "./slots";
@@ -32,9 +31,8 @@ export function getTaskWindow(
   const deadlineBound = task.deadline
     ? minDate(rawEnd, task.deadline)
     : rawEnd;
-  // Keep the raw legal boundary here. Grid candidates are snapped later by
-  // buildCandidateStarts(), while exact occupied-boundary candidates may use
-  // this raw start to eliminate avoidable gaps.
+  // Keep the raw legal boundary. Candidate generation remains minute-flexible
+  // and adds occupied boundaries separately so no artificial grid is needed.
   const start = rawStart;
 
   if (addMinutes(start, task.durationMinutes) > deadlineBound) return null;
@@ -68,17 +66,15 @@ export function generateLegalPlacements(
   const travelBefore = travelMinutesForTask(task);
   const occupiedAfter = travelMinutesAfterTask(task) + bufferMinutesAfterTask(task);
 
-  // Grid starts remain the normal search space. Boundary starts are added so
-  // flexible work can sit directly against another occupied interval instead
-  // of creating a 15/30-minute hole purely because of the grid.
+  // Every candidate is an exact legal boundary. The task window handles the
+  // current/earliest start, while occupied boundaries let work sit directly
+  // before or after fixed work, travel, buffers, and already placed tasks.
   const starts = [
-    ...buildCandidateStarts(
-      window.start,
-      window.end,
-      task.durationMinutes,
-      options.slotMinutes,
-      options.dayStart,
-    ),
+    window.start,
+    ...(weatherWindows?.flatMap((weatherWindow) => [
+      weatherWindow.start,
+      addMinutes(weatherWindow.end, -task.durationMinutes),
+    ]) ?? []),
     ...existingSchedule.flatMap((existing) => {
       const existingTask = taskMap.get(existing.taskId);
       const occupied = occupiedInterval(existing, existingTask);

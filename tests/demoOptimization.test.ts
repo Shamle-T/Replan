@@ -11,7 +11,6 @@ describe("demo optimization flow", () => {
       currentTime: demo.dayStart,
       dayStart: demo.dayStart,
       dayEnd: demo.dayEnd,
-      slotMinutes: 30,
     };
 
     expect(

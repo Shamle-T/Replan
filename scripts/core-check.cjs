@@ -11,9 +11,7 @@ const task = (overrides) => ({
   status: "planned",
   ...overrides,
 });
-const options = { currentTime: at(8), dayStart: at(8), dayEnd: at(20), slotMinutes: 30 };
-
-assert.equal(scheduler.snapUpToGrid(at(13, 27), 30, at(8)).getTime(), at(13, 30).getTime());
+const options = { currentTime: at(8), dayStart: at(8), dayEnd: at(20) };
 
 const gapSchedule = [
   { taskId: "gap-a", start: at(12), end: at(13) },
@@ -222,8 +220,8 @@ const bufferB = bufferedPlan.schedule.find(x => x.taskId === "buffer-b");
 assert.equal((bufferB.start.getTime() - bufferA.end.getTime()) / 60000, 10);
 
 
-// Live release at a non-grid minute must compact the whole remaining chain,
-// not only the first task and not wait for the next 30-minute grid line.
+// Live release at an arbitrary minute must compact the whole remaining chain,
+// not only the first task or a fixed time boundary.
 const nonGridSkip = scheduler.replanSchedule(
   [
     task({ id: "ng-current", title: "Current", status: "in-progress" }),

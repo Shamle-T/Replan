@@ -125,7 +125,6 @@ export default function ReplanApp() {
         currentTime: demo.dayStart,
         dayStart: demo.dayStart,
         dayEnd: demo.dayEnd,
-        slotMinutes: 30,
         requireMandatoryPlacement: false,
       });
       if (restoredIssues.length > 0) {
@@ -133,7 +132,6 @@ export default function ReplanApp() {
           currentTime: demo.dayStart,
           dayStart: demo.dayStart,
           dayEnd: demo.dayEnd,
-          slotMinutes: 30,
         });
         initialSchedule = repaired.schedule;
       }
@@ -280,7 +278,6 @@ export default function ReplanApp() {
       currentTime,
       dayStart,
       dayEnd,
-      slotMinutes: 30,
       weatherWindowsByTaskId,
       lockedSchedule,
     };
@@ -325,7 +322,6 @@ export default function ReplanApp() {
     currentTime,
     dayStart,
     dayEnd,
-    slotMinutes: 30,
     postTaskBreakMinutes: breakPreference,
     weatherWindowsByTaskId,
   };
@@ -334,7 +330,6 @@ export default function ReplanApp() {
     currentTime,
     dayStart,
     dayEnd,
-    slotMinutes: 30,
     weatherWindowsByTaskId,
   };
 

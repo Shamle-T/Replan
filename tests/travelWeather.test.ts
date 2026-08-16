@@ -123,7 +123,6 @@ describe("travel after event", () => {
       currentTime: at(6),
       dayStart: at(6),
       dayEnd: at(24),
-      slotMinutes: 30,
       requireMandatoryPlacement: false,
     });
     expect(issues.some((issue) => issue.code === "TRAVEL_OVERLAP")).toBe(true);

@@ -18,5 +18,4 @@ export const options = {
   currentTime: at(8),
   dayStart: at(8),
   dayEnd: at(20),
-  slotMinutes: 30,
 };

@@ -95,7 +95,6 @@ export interface SchedulingOptions {
   currentTime: Date;
   dayStart: Date;
   dayEnd: Date;
-  slotMinutes: number;
   /**
    * A missing key means weather has not been requested for the task.
    * An empty array means weather was checked and there is no suitable slot today.

@@ -66,4 +66,24 @@ describe("daily optimization", () => {
     expect(tasks[0].fixedStart).toBeUndefined();
   });
 
+  it("can start live work at the exact current minute instead of the next grid slot", () => {
+    const result = optimizeSchedule(
+      [
+        task({
+          id: "live-work",
+          title: "Live work",
+          earliestStart: at(12),
+          durationMinutes: 45,
+        }),
+      ],
+      {
+        ...options,
+        currentTime: at(12, 19),
+      },
+    );
+
+    expect(result.status).toBe("feasible");
+    expect(result.schedule[0].start.getTime()).toBe(at(12, 19).getTime());
+  });
+
 });

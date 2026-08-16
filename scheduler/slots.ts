@@ -18,27 +18,6 @@ export function minDate(...dates: Date[]): Date {
   return new Date(Math.min(...dates.map((date) => date.getTime())));
 }
 
-export function snapUpToGrid(
-  date: Date,
-  slotMinutes: number,
-  anchor: Date,
-): Date {
-  const slotMs = slotMinutes * MINUTE_MS;
-  const elapsed = date.getTime() - anchor.getTime();
-  if (elapsed <= 0) return new Date(anchor.getTime());
-  const slots = Math.ceil(elapsed / slotMs);
-  return new Date(anchor.getTime() + slots * slotMs);
-}
-
-export function isAlignedToGrid(
-  date: Date,
-  slotMinutes: number,
-  anchor: Date,
-): boolean {
-  const slotMs = slotMinutes * MINUTE_MS;
-  return (date.getTime() - anchor.getTime()) % slotMs === 0;
-}
-
 export function intervalsOverlap(
   aStart: Date,
   aEnd: Date,
@@ -77,26 +56,4 @@ export function scheduleSignature(schedule: ScheduledTask[]): string {
           .padStart(14, "0")}:${item.taskId}`,
     )
     .join("|");
-}
-
-export function buildCandidateStarts(
-  windowStart: Date,
-  windowEnd: Date,
-  durationMinutes: number,
-  slotMinutes: number,
-  anchor: Date,
-): Date[] {
-  const starts: Date[] = [];
-  const first = snapUpToGrid(windowStart, slotMinutes, anchor);
-  const latestStart = addMinutes(windowEnd, -durationMinutes);
-
-  for (
-    let time = first.getTime();
-    time <= latestStart.getTime();
-    time += slotMinutes * MINUTE_MS
-  ) {
-    starts.push(new Date(time));
-  }
-
-  return starts;
 }

@@ -6,7 +6,6 @@ const liveOptions = {
   currentTime: at(10, 30),
   dayStart: at(8),
   dayEnd: at(20),
-  slotMinutes: 30,
 };
 
 describe("adaptive replanning", () => {
