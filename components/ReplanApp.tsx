@@ -115,7 +115,7 @@ export default function ReplanApp() {
       ? saved.schedule[0].start.toDateString() === now.toDateString()
       : false;
 
-    let initialTasks = sameDay && saved ? saved.tasks : demo.tasks;
+    const initialTasks = sameDay && saved ? saved.tasks : demo.tasks;
     let initialSchedule = sameDay && saved ? saved.schedule : demo.schedule;
 
     // Saved state can outlive older UI/scheduler versions. Never restore a plan
@@ -217,7 +217,7 @@ export default function ReplanApp() {
       });
 
     return () => controller.abort();
-  }, [ready, dayStart, dayEnd, weatherRequestKey, weatherRefreshNonce]);
+  }, [ready, dayStart, dayEnd, tasks, weatherRequestKey, weatherRefreshNonce]);
 
   // Once a forecast is known, never leave an outdoor task sitting in a time
   // that the weather adapter has marked unsuitable. It returns to the open list.
@@ -388,7 +388,6 @@ export default function ReplanApp() {
       preview.proposedScore < currentPlanScore - 0.001;
 
     if (preview.result.status === "feasible" && preview.diffCount > 0 && scoreImproves) {
-      const changed = preview.result.diff?.filter((entry) => entry.type !== "unchanged") ?? [];
       setProposal({
         title: "Optimize your day?",
         kind: "optimize",

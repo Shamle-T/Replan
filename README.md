@@ -1,5 +1,7 @@
 # Replan
 
+Current implementation note: Live Day supports preset and custom 5-60-minute relax intervals after completion, cancellation, and skipping. Replan previews downstream movement before applying it, while fixed commitments remain anchored. Same-day travel buffers and weather-sensitive outdoor placement are included; the app remains a single-browser, single-day MVP with no backend database.
+
 Replan is a constraint-aware adaptive daily scheduler built for the Shortcut Asia Internship Challenge. It is deliberately **not** a generic calendar: the product is the deterministic scheduling and replanning engine.
 
 The defining workflow is:

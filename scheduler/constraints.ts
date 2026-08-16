@@ -123,11 +123,17 @@ export function validateSchedule(
     }
 
     const actualMinutes = minutesBetween(placement.start, placement.end);
+    const fixedDuration = task.fixedStart && task.fixedEnd
+      ? minutesBetween(task.fixedStart, task.fixedEnd)
+      : undefined;
     const historicalCompleted = task.status === "completed";
-    if (!historicalCompleted && Math.abs(actualMinutes - task.durationMinutes) > 0.001) {
+    if (
+      !historicalCompleted &&
+      Math.abs(actualMinutes - (fixedDuration ?? task.durationMinutes)) > 0.001
+    ) {
       issues.push({
         code: "PLACEMENT_DURATION_MISMATCH",
-        message: `${task.title} is scheduled for ${actualMinutes} minutes but requires ${task.durationMinutes}.`,
+        message: `${task.title} is scheduled for ${actualMinutes} minutes but requires ${fixedDuration ?? task.durationMinutes}.`,
         taskIds: [task.id],
       });
     }
@@ -213,8 +219,6 @@ export function validateSchedule(
       const bTask = taskMap.get(b.taskId);
       if (!aTask || !bTask) continue;
 
-      const aOccupied = occupiedInterval(a, aTask);
-      const bOccupied = occupiedInterval(b, bTask);
       if (intervalsOverlap(a.start, a.end, b.start, b.end)) {
         issues.push({
           code: "OVERLAP",

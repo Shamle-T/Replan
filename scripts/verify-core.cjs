@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { rmSync } = require("node:fs");
 const { spawnSync } = require("node:child_process");
 const path = require("node:path");
@@ -6,8 +7,8 @@ const root = path.resolve(__dirname, "..");
 const outDir = path.join(root, ".core-build");
 rmSync(outDir, { recursive: true, force: true });
 
-const tsc = process.platform === "win32" ? "tsc.cmd" : "tsc";
-const compile = spawnSync(tsc, ["-p", "tsconfig.core.json"], {
+const tsc = require.resolve("typescript/bin/tsc");
+const compile = spawnSync(process.execPath, [tsc, "-p", "tsconfig.core.json"], {
   cwd: root,
   stdio: "inherit",
   shell: false,

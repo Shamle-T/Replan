@@ -1,7 +1,3 @@
-export function startOfLocalDay(base: Date): Date {
-  return new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
-}
-
 export function atLocalTime(base: Date, hours: number, minutes = 0): Date {
   return new Date(
     base.getFullYear(),

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const assert = require("node:assert/strict");
 const scheduler = require("../.core-build/scheduler/index.js");
 const simulation = require("../.core-build/lib/simulation.js");

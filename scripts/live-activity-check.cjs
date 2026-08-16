@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { rmSync } = require("node:fs");
@@ -7,9 +8,8 @@ const root = path.resolve(__dirname, "..");
 const outDir = path.join(root, ".live-activity-build");
 rmSync(outDir, { recursive: true, force: true });
 
-const tsc = process.platform === "win32" ? "tsc.cmd" : "tsc";
-const compile = spawnSync(tsc, [
-  "--target", "ES2022",
+const tsc = require.resolve("typescript/bin/tsc");
+const compile = spawnSync(process.execPath, [tsc, "--target", "ES2022",
   "--module", "commonjs",
   "--moduleResolution", "node",
   "--strict",

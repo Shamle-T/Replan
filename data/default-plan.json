@@ -84,6 +84,7 @@
       "durationMinutes": 60,
       "priority": 1,
       "category": "fitness",
+      "earliestStart": "17:00",
       "latestEnd": "21:00",
       "travelMinutesBefore": 10,
       "location": "Gym",
