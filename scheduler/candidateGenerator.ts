@@ -22,6 +22,7 @@ export function generateLegalPlacements(
   task: Task,
   existingSchedule: ScheduledTask[],
   options: SchedulingOptions,
+  _allTasks?: Task[],
 ): ScheduledTask[] {
   if (task.fixedStart && task.fixedEnd) {
     const placement = {

@@ -67,3 +67,37 @@ export function sortSchedule(schedule: ScheduledTask[]): ScheduledTask[] {
     return a.taskId.localeCompare(b.taskId);
   });
 }
+
+export function scheduleSignature(schedule: ScheduledTask[]): string {
+  return sortSchedule(schedule)
+    .map(
+      (item) =>
+        `${item.start.getTime().toString().padStart(14, "0")}:${item.end
+          .getTime()
+          .toString()
+          .padStart(14, "0")}:${item.taskId}`,
+    )
+    .join("|");
+}
+
+export function buildCandidateStarts(
+  windowStart: Date,
+  windowEnd: Date,
+  durationMinutes: number,
+  slotMinutes: number,
+  anchor: Date,
+): Date[] {
+  const starts: Date[] = [];
+  const first = snapUpToGrid(windowStart, slotMinutes, anchor);
+  const latestStart = addMinutes(windowEnd, -durationMinutes);
+
+  for (
+    let time = first.getTime();
+    time <= latestStart.getTime();
+    time += slotMinutes * MINUTE_MS
+  ) {
+    starts.push(new Date(time));
+  }
+
+  return starts;
+}
