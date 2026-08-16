@@ -558,7 +558,14 @@ export default function ReplanApp() {
   };
 
   const updateProposalRelax = (minutes: PostTaskBreakMinutes) => {
-    if (!proposal?.change || proposal.change.type !== "TASK_COMPLETED") return;
+    if (
+      !proposal?.change ||
+      (proposal.change.type !== "TASK_COMPLETED" &&
+        proposal.change.type !== "TASK_CANCELLED" &&
+        proposal.change.type !== "TASK_SKIPPED")
+    ) {
+      return;
+    }
 
     const baseTasks = proposal.replanBaseTasks ?? tasks;
     const baseSchedule = proposal.replanBaseSchedule ?? schedule;
