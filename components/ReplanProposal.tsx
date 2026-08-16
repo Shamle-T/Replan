@@ -50,6 +50,14 @@ export default function ReplanProposal({
     .filter((entry) => !(result.postTaskBreak && entry.type === "resized"))
     .filter((entry) => !taskMap.get(entry.taskId)?.fixedStart);
   const visibleChanges = relevantChanges.slice(0, 6);
+  const fixedCommitments = tasks
+    .filter((task) => task.fixedStart && task.fixedEnd)
+    .map((task) => ({
+      task,
+      placement: result.schedule.find((item) => item.taskId === task.id),
+    }))
+    .filter((item): item is { task: Task; placement: NonNullable<typeof item.placement> } => Boolean(item.placement))
+    .sort((a, b) => a.placement.start.getTime() - b.placement.start.getTime());
   const [customMinutes, setCustomMinutes] = useState(
     relaxMinutes && ![5, 10, 15].includes(relaxMinutes) ? String(relaxMinutes) : "",
   );
@@ -223,6 +231,23 @@ export default function ReplanProposal({
                 <span className="more-changes">+{relevantChanges.length - visibleChanges.length} more</span>
               ) : null}
             </div>
+          ) : null}
+
+          {optimizeProposal && fixedCommitments.length > 0 ? (
+            <section className="optimization-result-section optimization-fixed-section proposal-fixed-section">
+              <div className="optimization-result-section-head">
+                <strong>Fixed commitments</strong>
+                <span>Stayed anchored</span>
+              </div>
+              <div className="optimization-result-list">
+                {fixedCommitments.map(({ task, placement }) => (
+                  <div className="optimization-result-row optimization-fixed-row" key={task.id}>
+                    <strong>{task.title}</strong>
+                    <span>{formatTime(placement.start)} → {formatTime(placement.end)} · Fixed</span>
+                  </div>
+                ))}
+              </div>
+            </section>
           ) : null}
 
           {result.reasons.length > 0 ? (

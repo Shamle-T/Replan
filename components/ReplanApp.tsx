@@ -380,10 +380,8 @@ export default function ReplanApp() {
     const preview = optimizationPreview;
     if (!preview) return;
 
-    // Demonstration flow: optimization is explicit and only happens when the
-    // user presses the button. A feasible improvement is applied immediately
-    // so the calendar visibly compacts in one interaction. Infeasibility still
-    // opens the proposal surface because it requires user attention.
+    // Optimization is previewed before it changes the calendar. The user can
+    // inspect the proposed movement and fixed commitments, then approve it.
     const scoreImproves =
       preview.result.status === "feasible" &&
       preview.proposedScore !== undefined &&
@@ -391,18 +389,16 @@ export default function ReplanApp() {
 
     if (preview.result.status === "feasible" && preview.diffCount > 0 && scoreImproves) {
       const changed = preview.result.diff?.filter((entry) => entry.type !== "unchanged") ?? [];
-      const explanations = explainOptimizationChanges(
-        tasks,
-        schedule,
-        preview.result.schedule,
-        planOptions,
-      );
-      setSchedule(preview.result.schedule);
-      setRecentAppliedDiff(changed);
-      setOptimizationNotice(changed);
-      setOptimizationExplanations(explanations);
-      setProposal(null);
-      setPlanSuggestion(null);
+      setProposal({
+        title: "Optimize your day?",
+        kind: "optimize",
+        previousScore: currentPlanScore,
+        proposedScore: preview.proposedScore,
+        previousOpenMinutes: currentOpenMinutes,
+        proposedOpenMinutes: preview.proposedOpenMinutes,
+        result: { ...preview.result, diff: diffSchedules(schedule, preview.result.schedule) },
+        createdAtMs: Date.now(),
+      });
       return;
     }
 
@@ -658,6 +654,14 @@ export default function ReplanApp() {
         setRecentFactChange({ ...proposal.change });
       }
       setRecentAppliedDiff(committedChangedEntries);
+    }
+    if (proposal.kind === "optimize") {
+      setRecentAppliedDiff(committedChangedEntries);
+      setOptimizationNotice(committedChangedEntries);
+      setOptimizationExplanations(
+        explainOptimizationChanges(tasks, schedule, committedSchedule, planOptions),
+      );
+      setPlanSuggestion(null);
     }
     setProposal(null);
   };
