@@ -114,7 +114,7 @@ export async function fetchWeatherConstraints(
       statusByTaskId[task.id] = {
         state: "error",
         location,
-        summary: "Couldn't load weather for this area. Check the city/suburb and try again.",
+        summary: "Couldn’t load weather for this area. Check the city/suburb and try again.",
         source: "Open-Meteo",
         errorDetail: forecast instanceof Error ? forecast.message : undefined,
       };

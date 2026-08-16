@@ -1,6 +1,7 @@
-import type { SchedulingOptions, Task } from "../scheduler";
+import type { Task } from "../scheduler";
 
-export const at = (hour: number, minute = 0): Date =>
+export const base = new Date(2026, 7, 15, 0, 0, 0, 0);
+export const at = (hour: number, minute = 0) =>
   new Date(2026, 7, 15, hour, minute, 0, 0);
 
 export function task(overrides: Partial<Task> & Pick<Task, "id" | "title">): Task {
@@ -13,7 +14,7 @@ export function task(overrides: Partial<Task> & Pick<Task, "id" | "title">): Tas
   };
 }
 
-export const options: SchedulingOptions = {
+export const options = {
   currentTime: at(8),
   dayStart: at(8),
   dayEnd: at(20),

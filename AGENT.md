@@ -12,6 +12,22 @@ The scheduling/replanning engine is the product. The UI is a precise way to coll
 
 ## 2. Current delivery target
 
+### User-approved extension (15 Aug 2026)
+
+The current working MVP now includes a deliberately small subset of the previously-later travel/weather ideas because the user explicitly requested them for the demo build:
+
+- optional `travelMinutesBefore` buffers that are treated as occupied hard-constraint time;
+- travel blocks rendered immediately before calendar tasks;
+- optional weather-aware outdoor tasks with a user-entered location;
+- Open-Meteo is used only by a UI/service adapter to produce deterministic clear/dry scheduling windows;
+- the scheduler itself still performs no network calls;
+- if weather cannot be verified or no suitable window exists today, the outdoor task remains open/unscheduled rather than fabricating a next-day plan;
+- Plan remains light and Live Day automatically uses the dark UI;
+- scheduled tasks are editable by clicking the calendar card;
+- task categories are visual tags only and do not silently change priority.
+
+Do not expand this into traffic APIs, route calculation, automatic next-day planning, or broader contextual intelligence unless explicitly requested.
+
 Build the Shortcut challenge MVP first. Keep later intelligence phases architecturally possible but out of the initial implementation until the core workflow is correct, tested, explainable, and usable end-to-end.
 
 ### MVP capabilities
@@ -43,6 +59,11 @@ Build the Shortcut challenge MVP first. Keep later intelligence phases architect
 25. Support a lightweight **Update Replan** interaction using quick actions and structured input.
 26. Support a deterministic **Simulation Mode** for frontend/demo testing so Live Day can run much faster than real time.
 27. Unit tests for constraints, scheduling, preferred-time placement, replanning, and time-dependent behavior.
+28. After an early completion, let the user choose Start now or a 5–15 minute relax window (default suggestion 10 minutes).
+29. After that relax window, advance the already-next flexible task to the earliest hard-constraint-safe start when possible instead of leaving avoidable free time.
+30. Show the relax window as a separate Live Day countdown rather than as a normal user task.
+31. Keep the primary UI concise: show the decision/outcome first, limit proposal diffs to a few meaningful changes, and keep machine-readable reasons collapsed under a small Details affordance.
+32. Avoid large explanatory hero sections, persistent technical footers, or exposing optimizer internals in the normal user flow.
 
 ## 3. Primary product modes
 
@@ -126,10 +147,9 @@ Frontend/demo mode may provide a simulated time that advances faster than real t
 Recommended controls:
 
 - Pause / Play
-- 1x
-- 10x
-- 30x
-- 60x
+- 5 simulated minutes per second
+- 10 simulated minutes per second
+- 30 simulated minutes per second
 - Jump to next event
 - Reset simulation
 
@@ -144,19 +164,20 @@ Simulation Mode must:
 
 ### Scheduling granularity
 
-The MVP scheduling grid remains 30 minutes unless explicitly changed.
+The normal planning/optimization grid remains 30 minutes. Real/simulated current time may be minute-accurate, and ordinary candidate starts should still snap to the next valid 30-minute boundary.
 
-Real/simulated current time may be minute-accurate. Candidate task starts should snap to the next valid 30-minute boundary when appropriate.
+There is one Live Day transition exception: after a real-time change releases or shifts the current schedule (early completion, skip, cancel, or an accepted overrun), Replan may compact the **remaining flexible chain** onto exact minute boundaries, provided all hard constraints remain valid. This prevents a live change at (for example) 10:37 from wasting time until the next 30-minute planning grid line. The normal Plan/Optimize search grid remains 30 minutes; exact-minute compaction is a finishing rule for accepted Live Day replans.
 
 Example:
 
 ```text
-Lunch planned: 13:00-14:00
+Task planned: 13:00-14:00
 User finishes: 13:27
-Next schedulable slot: 13:30
+Relax preference: 10 min
+Proposed next flexible task: 13:37
 ```
 
-Do not silently start a 30-minute-grid task at 13:27.
+If the user chooses Start now, resume immediately. If a fixed commitment or hard constraint blocks a chosen relax window, reduce it deterministically toward 5 minutes; if even 5 minutes is impossible, protect the hard constraint and resume immediately.
 
 ## 5. Interaction model
 
@@ -608,8 +629,10 @@ Exit: correct, explainable, pitch-ready MVP.
 
 ### Phase 9 - Recovery and activity compatibility
 
+The simple generic 5–15-minute post-task relax window is already part of the MVP. Do not expand it into contextual recovery logic yet. Later work may add:
+
 - user-configured gym recovery
-- naps/breaks as user-approved actions
+- naps/breaks as richer user-approved schedule actions
 - post-test preference for lower-cognitive-load activities
 - task intensity/effect model
 
@@ -684,3 +707,10 @@ feat(ui): add live day and simulation mode
 ## 17. Stop rule
 
 For every agent prompt, implement only the requested stage. Run relevant tests/build checks, summarize files changed and decisions made, then stop. Do not begin later phases automatically.
+
+## Current compact-planning refinement
+
+- Flexible work is compact-by-default. The optimizer should avoid idle gaps between movable tasks unless a hard constraint, travel block, fixed commitment, weather window, or explicit user-requested interval requires the gap.
+- Tasks may specify `bufferMinutesAfter` as a user-requested pause after the task. The default is 0 (immediately). UI presets are Immediately, 5 min, 10 min, and Custom.
+- Candidate generation may add exact occupied-boundary placements in addition to the normal 30-minute grid so tasks can sit directly against another task/travel/buffer boundary without an artificial grid-created gap.
+- Live Day task-time controls support reversible + / - adjustments. Removing extra time is only enabled for time the user previously added during the current session.

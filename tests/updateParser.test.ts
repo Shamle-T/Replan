@@ -2,9 +2,26 @@ import { describe, expect, it } from "vitest";
 import { parseUpdateMessage } from "../interactions/updateParser";
 import { at, task } from "./helpers";
 
-describe("structured live updates", () => {
-  const current = task({ id: "a", title: "Assignment" });
-  const placement = { taskId: "a", start: at(10), end: at(11) };
-  it("maps a completion phrase to a factual completion", () => expect(parseUpdateMessage("finished early", current, placement, at(10, 25))?.type).toBe("TASK_COMPLETED"));
-  it("maps a duration request to an overrun", () => { const result = parseUpdateMessage("need 30 min", current, placement, at(10, 25)); expect(result?.type).toBe("TASK_OVERRUN"); if (result?.type === "TASK_OVERRUN") expect(result.newExpectedEnd.getTime()).toBe(at(11, 30).getTime()); });
+describe("structured update parser", () => {
+  it("maps a completion phrase to TASK_COMPLETED", () => {
+    const result = parseUpdateMessage("Finished early", {
+      currentTime: at(10, 25),
+      currentTask: task({ id: "a", title: "A" }),
+      currentPlacement: { taskId: "a", start: at(10), end: at(11) },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.change.type).toBe("TASK_COMPLETED");
+  });
+
+  it("maps +30 to an overrun", () => {
+    const result = parseUpdateMessage("Need +30m", {
+      currentTime: at(10, 25),
+      currentTask: task({ id: "a", title: "A" }),
+      currentPlacement: { taskId: "a", start: at(10), end: at(11) },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok && result.change.type === "TASK_OVERRUN") {
+      expect(result.change.newExpectedEnd.getTime()).toBe(at(11, 30).getTime());
+    }
+  });
 });

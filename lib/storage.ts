@@ -1,6 +1,7 @@
-import type { ScheduledTask, Task } from "../scheduler/types";
+import type { PostTaskBreakMinutes, ScheduledTask, Task } from "../scheduler/types";
 
 const STORAGE_KEY = "replan:mvp:v3-final";
+const BREAK_PREFERENCE_KEY = "replan:post-task-break:v1";
 
 interface PersistedTask extends Omit<
   Task,
@@ -58,6 +59,22 @@ export function loadReplanState(): PersistedReplanState | null {
   } catch {
     return null;
   }
+}
+
+export function clearReplanState(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(STORAGE_KEY);
+}
+
+export function saveBreakPreference(minutes: PostTaskBreakMinutes): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(BREAK_PREFERENCE_KEY, String(minutes));
+}
+
+export function loadBreakPreference(): PostTaskBreakMinutes {
+  if (typeof window === "undefined") return 10;
+  const value = Number(window.localStorage.getItem(BREAK_PREFERENCE_KEY));
+  return Number.isInteger(value) && value >= 5 && value <= 15 ? (value as PostTaskBreakMinutes) : 10;
 }
 
 function serializeTask(task: Task): PersistedTask {

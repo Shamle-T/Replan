@@ -21,18 +21,30 @@ export interface Task {
   durationMinutes: number;
   priority: TaskPriority;
   category?: TaskCategory;
+
   deadline?: Date;
+
   fixedStart?: Date;
   fixedEnd?: Date;
+
   earliestStart?: Date;
   latestEnd?: Date;
+
+  /** Optional buffer reserved immediately before the task for getting there. */
   travelMinutesBefore?: number;
+  /** Optional buffer reserved immediately after the task for getting away / returning. */
   travelMinutesAfter?: number;
+  /** User-requested pause after this task before another task may begin. Defaults to 0. */
   bufferMinutesAfter?: number;
+  /** Human-readable venue/place for the task and travel context. */
   location?: string;
+  /** Optional city/suburb/postcode used for weather lookup when the venue is not geocodable. */
   weatherLocation?: string;
+  /** When true, the UI weather adapter supplies clear/dry time windows to the scheduler. */
   weatherSensitive?: boolean;
+  /** Explicit user override: keep/schedule the outdoor task even when forecast rules reject the time. */
   weatherOverride?: boolean;
+
   optional: boolean;
   status: TaskStatus;
 }
@@ -51,20 +63,43 @@ export interface SchedulingWindow {
 export type WeatherWindowsByTaskId = Record<string, SchedulingWindow[]>;
 
 export type ScheduleChange =
-  | { type: "TASK_COMPLETED"; taskId: string; actualEnd: Date }
-  | { type: "TASK_OVERRUN"; taskId: string; newExpectedEnd: Date }
-  | { type: "TASK_CANCELLED"; taskId: string }
-  | { type: "TASK_SKIPPED"; taskId: string };
+  | {
+      type: "TASK_COMPLETED";
+      taskId: string;
+      actualEnd: Date;
+    }
+  | {
+      type: "TASK_OVERRUN";
+      taskId: string;
+      newExpectedEnd: Date;
+    }
+  | {
+      type: "TASK_CANCELLED";
+      taskId: string;
+    }
+  | {
+      type: "TASK_SKIPPED";
+      taskId: string;
+    };
 
 export type SchedulingRequest =
-  | { type: "FIND_TIME"; taskId: string }
-  | { type: "OPTIMIZE_DAY" };
+  | {
+      type: "FIND_TIME";
+      taskId: string;
+    }
+  | {
+      type: "OPTIMIZE_DAY";
+    };
 
 export interface SchedulingOptions {
   currentTime: Date;
   dayStart: Date;
   dayEnd: Date;
   slotMinutes: number;
+  /**
+   * A missing key means weather has not been requested for the task.
+   * An empty array means weather was checked and there is no suitable slot today.
+   */
   weatherWindowsByTaskId?: WeatherWindowsByTaskId;
 }
 
@@ -142,7 +177,12 @@ export interface ScheduleReason {
   metadata?: Record<string, string | number | boolean>;
 }
 
-export type ScheduleDiffType = "added" | "removed" | "moved" | "resized" | "unchanged";
+export type ScheduleDiffType =
+  | "added"
+  | "removed"
+  | "moved"
+  | "resized"
+  | "unchanged";
 
 export interface ScheduleDiffEntry {
   taskId: string;

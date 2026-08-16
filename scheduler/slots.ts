@@ -26,8 +26,8 @@ export function snapUpToGrid(
   const slotMs = slotMinutes * MINUTE_MS;
   const elapsed = date.getTime() - anchor.getTime();
   if (elapsed <= 0) return new Date(anchor.getTime());
-
-  return new Date(anchor.getTime() + Math.ceil(elapsed / slotMs) * slotMs);
+  const slots = Math.ceil(elapsed / slotMs);
+  return new Date(anchor.getTime() + slots * slotMs);
 }
 
 export function isAlignedToGrid(
@@ -35,7 +35,8 @@ export function isAlignedToGrid(
   slotMinutes: number,
   anchor: Date,
 ): boolean {
-  return (date.getTime() - anchor.getTime()) % (slotMinutes * MINUTE_MS) === 0;
+  const slotMs = slotMinutes * MINUTE_MS;
+  return (date.getTime() - anchor.getTime()) % slotMs === 0;
 }
 
 export function intervalsOverlap(
@@ -60,10 +61,8 @@ export function sortSchedule(schedule: ScheduledTask[]): ScheduledTask[] {
   return [...schedule].sort((a, b) => {
     const byStart = a.start.getTime() - b.start.getTime();
     if (byStart !== 0) return byStart;
-
     const byEnd = a.end.getTime() - b.end.getTime();
     if (byEnd !== 0) return byEnd;
-
     return a.taskId.localeCompare(b.taskId);
   });
 }

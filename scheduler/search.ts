@@ -1,6 +1,7 @@
 import { DEFAULT_MAX_SEARCH_NODES } from "./config";
 import { generateLegalPlacements } from "./candidateGenerator";
 import { validateSchedule, validateTaskDefinitions } from "./constraints";
+import { buildScheduleReasons } from "./explain";
 import { compareScores, scoreSchedule } from "./scoring";
 import { scheduleSignature, sortSchedule } from "./slots";
 import { compareTaskUrgency } from "./urgency";
@@ -20,7 +21,6 @@ function isActive(task: Task): boolean {
 
 function fixedPlacement(task: Task): ScheduledTask | null {
   if (!task.fixedStart || !task.fixedEnd) return null;
-
   return {
     taskId: task.id,
     start: new Date(task.fixedStart.getTime()),
@@ -28,76 +28,93 @@ function fixedPlacement(task: Task): ScheduledTask | null {
   };
 }
 
-export function optimizeSchedule(tasks: Task[], options: OptimizationOptions): ScheduleResult {
+export function optimizeSchedule(
+  tasks: Task[],
+  options: OptimizationOptions,
+): ScheduleResult {
   const definitionIssues = validateTaskDefinitions(tasks);
   if (definitionIssues.length > 0) {
-    return infeasibleFromIssues(tasks, [], definitionIssues, 0, false);
+    return infeasibleFromIssues(tasks, options.lockedSchedule ?? [], definitionIssues, 0, false);
   }
 
   const activeTasks = tasks.filter(isActive);
-  const lockedSchedule = sortSchedule(
-    (options.lockedSchedule ?? []).map((placement) => ({
-      taskId: placement.taskId,
-      start: new Date(placement.start.getTime()),
-      end: new Date(placement.end.getTime()),
+  const base = sortSchedule(
+    (options.lockedSchedule ?? []).map((item) => ({
+      taskId: item.taskId,
+      start: new Date(item.start.getTime()),
+      end: new Date(item.end.getTime()),
     })),
   );
-  const lockedTaskIds = new Set(lockedSchedule.map((placement) => placement.taskId));
-  const fixedSchedule = activeTasks
-    .filter((task) => task.fixedStart && task.fixedEnd && !lockedTaskIds.has(task.id))
+  const baseTaskIds = new Set(base.map((item) => item.taskId));
+
+  const fixed = activeTasks
+    .filter((task) => task.fixedStart && task.fixedEnd && !baseTaskIds.has(task.id))
     .map(fixedPlacement)
-    .filter((placement): placement is ScheduledTask => placement !== null);
-  const seededSchedule = sortSchedule([...lockedSchedule, ...fixedSchedule]);
-  const seededIssues = validateSchedule(seededSchedule, tasks, {
+    .filter((item): item is ScheduledTask => item !== null);
+
+  const seeded = sortSchedule([...base, ...fixed]);
+  const seededIssues = validateSchedule(seeded, tasks, {
     ...options,
     requireMandatoryPlacement: false,
   });
   if (seededIssues.length > 0) {
-    return infeasibleFromIssues(tasks, seededSchedule, seededIssues, 0, false);
+    return infeasibleFromIssues(tasks, seeded, seededIssues, 0, false);
   }
 
-  const flexibleTasks = activeTasks
-    .filter((task) => !task.fixedStart && !lockedTaskIds.has(task.id))
-    .sort((left, right) => compareTaskUrgency(left, right, options));
-  const maxSearchNodes = options.maxSearchNodes ?? DEFAULT_MAX_SEARCH_NODES;
+  const flexible = activeTasks
+    .filter((task) => !task.fixedStart && !baseTaskIds.has(task.id))
+    .sort((a, b) => compareTaskUrgency(a, b, options));
+
+  const maxNodes = options.maxSearchNodes ?? DEFAULT_MAX_SEARCH_NODES;
   let searchNodes = 0;
   let searchTruncated = false;
   let best: FeasibleScheduleResult | null = null;
 
-  const visit = (index: number, partialSchedule: ScheduledTask[]): void => {
-    if (searchNodes >= maxSearchNodes) {
+  const visit = (index: number, partial: ScheduledTask[]) => {
+    if (searchNodes >= maxNodes) {
       searchTruncated = true;
       return;
     }
     searchNodes += 1;
 
-    if (index === flexibleTasks.length) {
-      const schedule = sortSchedule(partialSchedule);
-      const issues = validateSchedule(schedule, tasks, {
+    if (index >= flexible.length) {
+      const finalSchedule = sortSchedule(partial);
+      const issues = validateSchedule(finalSchedule, tasks, {
         ...options,
         requireMandatoryPlacement: true,
       });
       if (issues.length > 0) return;
 
-      const scheduledTaskIds = new Set(schedule.map((placement) => placement.taskId));
+      const scheduledIds = new Set(finalSchedule.map((item) => item.taskId));
       const unscheduledTaskIds = activeTasks
-        .filter((task) => !scheduledTaskIds.has(task.id))
+        .filter((task) => !scheduledIds.has(task.id))
         .map((task) => task.id)
         .sort();
+      const score = scoreSchedule(finalSchedule, tasks, options);
       const candidate: FeasibleScheduleResult = {
         status: "feasible",
-        schedule,
-        score: scoreSchedule(schedule, tasks, options),
-        reasons: [],
+        schedule: finalSchedule,
+        score,
+        reasons: buildScheduleReasons(
+          tasks,
+          finalSchedule,
+          unscheduledTaskIds,
+          options,
+        ),
         unscheduledTaskIds,
         searchNodes,
         searchTruncated,
       };
 
+      if (!best) {
+        best = candidate;
+        return;
+      }
+
+      const scoreComparison = compareScores(candidate.score, best.score);
       if (
-        !best ||
-        compareScores(candidate.score, best.score) < 0 ||
-        (compareScores(candidate.score, best.score) === 0 &&
+        scoreComparison < 0 ||
+        (scoreComparison === 0 &&
           scheduleSignature(candidate.schedule) < scheduleSignature(best.schedule))
       ) {
         best = candidate;
@@ -105,67 +122,57 @@ export function optimizeSchedule(tasks: Task[], options: OptimizationOptions): S
       return;
     }
 
-    const task = flexibleTasks[index];
-    const placements = generateLegalPlacements(task, partialSchedule, options).sort((left, right) => {
-      const byScore = compareScores(
-        scoreSchedule([...partialSchedule, left], tasks, options),
-        scoreSchedule([...partialSchedule, right], tasks, options),
-      );
-      return byScore || left.start.getTime() - right.start.getTime();
+    const task = flexible[index];
+    const placements = generateLegalPlacements(task, partial, options, tasks).sort((a, b) => {
+      const aScore = scoreSchedule([...partial, a], tasks, options).total;
+      const bScore = scoreSchedule([...partial, b], tasks, options).total;
+      return aScore - bScore || a.start.getTime() - b.start.getTime();
     });
 
     for (const placement of placements) {
-      visit(index + 1, [...partialSchedule, placement]);
-      if (searchNodes >= maxSearchNodes) break;
+      visit(index + 1, [...partial, placement]);
+      if (searchNodes >= maxNodes) break;
     }
 
-    if (task.optional && searchNodes < maxSearchNodes) {
-      visit(index + 1, partialSchedule);
+    if ((task.optional || canRemainOpenForWeather(task, options)) && searchNodes < maxNodes) {
+      visit(index + 1, partial);
     }
   };
 
-  visit(0, seededSchedule);
+  visit(0, seeded);
 
   const chosen = best as FeasibleScheduleResult | null;
   if (chosen) {
     chosen.searchNodes = searchNodes;
     chosen.searchTruncated = searchTruncated;
+    if (searchTruncated) {
+      chosen.reasons.push({
+        code: "SEARCH_LIMIT_REACHED",
+        summary:
+          "The search limit was reached; the returned schedule is the best deterministic feasible plan found within the configured search budget.",
+        metadata: { maxSearchNodes: maxNodes },
+      });
+    }
     return chosen;
   }
 
-  const diagnosticIssues = mandatoryPlacementIssues(
-    tasks,
-    flexibleTasks,
-    seededSchedule,
-    options,
-  );
-  return infeasibleFromIssues(tasks, seededSchedule, diagnosticIssues, searchNodes, searchTruncated);
-}
-
-function mandatoryPlacementIssues(
-  tasks: Task[],
-  flexibleTasks: Task[],
-  seededSchedule: ScheduledTask[],
-  options: OptimizationOptions,
-): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
-
-  for (const task of flexibleTasks) {
-    if (task.optional || generateLegalPlacements(task, seededSchedule, options).length > 0) continue;
-
-    issues.push({
-      code: "MANDATORY_UNSCHEDULED",
-      message: `${task.title} has no legal placement around fixed commitments and hard constraints.`,
-      taskIds: [task.id],
-    });
+  const diagnosticIssues: ValidationIssue[] = [];
+  const placedIds = new Set(seeded.map((item) => item.taskId));
+  for (const task of flexible) {
+    if (task.optional || canRemainOpenForWeather(task, options)) continue;
+    const legal = generateLegalPlacements(task, seeded, options, tasks);
+    if (legal.length === 0) {
+      diagnosticIssues.push({
+        code: "MANDATORY_UNSCHEDULED",
+        message: `${task.title} has no legal placement around the fixed/locked commitments and its hard constraints.`,
+        taskIds: [task.id],
+      });
+    }
   }
 
-  if (issues.length > 0) return issues;
-
-  const scheduledTaskIds = new Set(seededSchedule.map((placement) => placement.taskId));
-  for (const task of tasks) {
-    if (isActive(task) && !task.optional && !scheduledTaskIds.has(task.id)) {
-      issues.push({
+  for (const task of activeTasks) {
+    if (!task.optional && !canRemainOpenForWeather(task, options) && !placedIds.has(task.id) && !diagnosticIssues.some((issue) => issue.taskIds.includes(task.id))) {
+      diagnosticIssues.push({
         code: "MANDATORY_UNSCHEDULED",
         message: `${task.title} could not be placed in a complete feasible combination.`,
         taskIds: [task.id],
@@ -173,7 +180,26 @@ function mandatoryPlacementIssues(
     }
   }
 
-  return issues;
+  if (diagnosticIssues.length === 0) {
+    diagnosticIssues.push({
+      code: "MANDATORY_UNSCHEDULED",
+      message: "No complete feasible schedule exists for all mandatory tasks.",
+      taskIds: activeTasks.filter((task) => !task.optional && !canRemainOpenForWeather(task, options)).map((task) => task.id),
+    });
+  }
+
+  return infeasibleFromIssues(
+    tasks,
+    seeded,
+    diagnosticIssues,
+    searchNodes,
+    searchTruncated,
+  );
+}
+
+function canRemainOpenForWeather(task: Task, options: OptimizationOptions): boolean {
+  if (!task.weatherSensitive || task.weatherOverride || !options.weatherWindowsByTaskId) return false;
+  return Object.prototype.hasOwnProperty.call(options.weatherWindowsByTaskId, task.id);
 }
 
 function infeasibleFromIssues(
@@ -183,9 +209,9 @@ function infeasibleFromIssues(
   searchNodes: number,
   searchTruncated: boolean,
 ): InfeasibleScheduleResult {
-  const scheduledTaskIds = new Set(schedule.map((placement) => placement.taskId));
+  const scheduledIds = new Set(schedule.map((item) => item.taskId));
   const unscheduledTaskIds = tasks
-    .filter((task) => isActive(task) && !scheduledTaskIds.has(task.id))
+    .filter((task) => isActive(task) && !scheduledIds.has(task.id))
     .map((task) => task.id)
     .sort();
 
@@ -193,7 +219,11 @@ function infeasibleFromIssues(
     status: "infeasible",
     schedule: sortSchedule(schedule),
     issues,
-    reasons: [],
+    reasons: unscheduledTaskIds.map((taskId) => ({
+      code: "NO_LEGAL_PLACEMENT" as const,
+      taskId,
+      summary: `${tasks.find((task) => task.id === taskId)?.title ?? taskId} could not be placed without violating a hard constraint.`,
+    })),
     unscheduledTaskIds,
     searchNodes,
     searchTruncated,

@@ -1,14 +1,39 @@
-import type { ScheduledTask, Task } from "../scheduler";
+import type { ScheduledTask, Task } from "../scheduler/types";
 
-export function findCurrentPlacement(schedule: ScheduledTask[], tasks: Task[], currentTime: Date): ScheduledTask | undefined {
-  const taskMap = new Map(tasks.map((task) => [task.id, task]));
-  return [...schedule].sort((left, right) => left.start.getTime() - right.start.getTime()).find((placement) => {
-    const task = taskMap.get(placement.taskId);
-    return task && !["completed", "cancelled", "skipped"].includes(task.status) && placement.start <= currentTime && currentTime < placement.end;
-  });
+/**
+ * Live Day should derive what is happening from the actual scheduled interval,
+ * not from fragile UI state. A missing legacy status is treated as planned.
+ */
+export function isTaskLiveEligible(task: Task | undefined): boolean {
+  if (!task) return false;
+  return task.status !== "completed" && task.status !== "cancelled" && task.status !== "skipped";
 }
 
-export function findNextPlacement(schedule: ScheduledTask[], tasks: Task[], currentTime: Date): ScheduledTask | undefined {
-  const taskMap = new Map(tasks.map((task) => [task.id, task]));
-  return [...schedule].sort((left, right) => left.start.getTime() - right.start.getTime()).find((placement) => taskMap.get(placement.taskId)?.status === "planned" && placement.start > currentTime);
+export function findCurrentPlacement(
+  schedule: ScheduledTask[],
+  taskMap: Map<string, Task>,
+  currentTime: Date,
+): ScheduledTask | undefined {
+  const now = currentTime.getTime();
+  return [...schedule]
+    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .find((item) => {
+      const task = taskMap.get(item.taskId);
+      return (
+        isTaskLiveEligible(task) &&
+        item.start.getTime() <= now &&
+        now < item.end.getTime()
+      );
+    });
+}
+
+export function findNextPlacement(
+  schedule: ScheduledTask[],
+  taskMap: Map<string, Task>,
+  currentTime: Date,
+): ScheduledTask | undefined {
+  const now = currentTime.getTime();
+  return [...schedule]
+    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .find((item) => isTaskLiveEligible(taskMap.get(item.taskId)) && item.start.getTime() > now);
 }

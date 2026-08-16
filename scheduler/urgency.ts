@@ -29,15 +29,15 @@ export function compareTaskUrgency(
   b: Task,
   options: SchedulingOptions,
 ): number {
-  const left = getTaskUrgency(a, options);
-  const right = getTaskUrgency(b, options);
+  const ua = getTaskUrgency(a, options);
+  const ub = getTaskUrgency(b, options);
 
   return (
-    left.mandatoryRank - right.mandatoryRank ||
-    left.deadlineTime - right.deadlineTime ||
-    left.windowMinutes - right.windowMinutes ||
-    left.priorityRank - right.priorityRank ||
-    left.durationRank - right.durationRank ||
+    ua.mandatoryRank - ub.mandatoryRank ||
+    ua.deadlineTime - ub.deadlineTime ||
+    ua.windowMinutes - ub.windowMinutes ||
+    ua.priorityRank - ub.priorityRank ||
+    ua.durationRank - ub.durationRank ||
     a.id.localeCompare(b.id)
   );
 }

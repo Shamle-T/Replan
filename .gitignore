@@ -3,7 +3,6 @@ node_modules
 out
 coverage
 .core-build
-*.tsbuildinfo
 .DS_Store
 *.log
 .env*

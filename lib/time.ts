@@ -1,5 +1,17 @@
+export function startOfLocalDay(base: Date): Date {
+  return new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
+}
+
 export function atLocalTime(base: Date, hours: number, minutes = 0): Date {
-  return new Date(base.getFullYear(), base.getMonth(), base.getDate(), hours, minutes, 0, 0);
+  return new Date(
+    base.getFullYear(),
+    base.getMonth(),
+    base.getDate(),
+    hours,
+    minutes,
+    0,
+    0,
+  );
 }
 
 export function timeInputValue(date?: Date): string {
@@ -17,13 +29,26 @@ export function dateFromTimeInput(base: Date, value: string): Date | undefined {
 }
 
 export function formatTime(date: Date): string {
-  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date);
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 export function formatTimeRange(start: Date, end: Date): string {
   return `${formatTime(start)} – ${formatTime(end)}`;
 }
 
+export function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+
+/** Human-readable duration used by UI movement badges and summaries. */
 export function formatDurationCompact(minutes: number): string {
   const rounded = Math.max(0, Math.round(Math.abs(minutes)));
   if (rounded < 60) return `${rounded}m`;

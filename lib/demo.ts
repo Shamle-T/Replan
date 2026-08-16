@@ -6,7 +6,7 @@ export interface DemoState {
   schedule: ScheduledTask[];
   dayStart: Date;
   dayEnd: Date;
-  currentTime: Date;
+  simulationTime: Date;
 }
 
 export function createDemoState(baseDate: Date): DemoState {
@@ -23,6 +23,8 @@ export function createDemoState(baseDate: Date): DemoState {
       category: "academic",
       fixedStart: atLocalTime(baseDate, 9, 0),
       fixedEnd: atLocalTime(baseDate, 10, 0),
+      travelMinutesBefore: 10,
+      location: "Lecture hall",
       optional: false,
       status: "planned",
     },
@@ -46,6 +48,9 @@ export function createDemoState(baseDate: Date): DemoState {
       category: "social",
       earliestStart: atLocalTime(baseDate, 12, 0),
       latestEnd: atLocalTime(baseDate, 14, 0),
+      travelMinutesBefore: 10,
+      travelMinutesAfter: 10,
+      location: "Campus cafe",
       optional: false,
       status: "planned",
     },
@@ -57,6 +62,7 @@ export function createDemoState(baseDate: Date): DemoState {
       category: "other",
       fixedStart: atLocalTime(baseDate, 14, 0),
       fixedEnd: atLocalTime(baseDate, 15, 0),
+      travelMinutesBefore: 5,
       optional: false,
       status: "planned",
     },
@@ -89,6 +95,8 @@ export function createDemoState(baseDate: Date): DemoState {
       priority: 1,
       category: "fitness",
       latestEnd: atLocalTime(baseDate, 21, 0),
+      travelMinutesBefore: 10,
+      location: "Gym",
       optional: true,
       status: "planned",
     },
@@ -141,6 +149,6 @@ export function createDemoState(baseDate: Date): DemoState {
     schedule,
     dayStart,
     dayEnd,
-    currentTime: atLocalTime(baseDate, 8, 30),
+    simulationTime: atLocalTime(baseDate, 8, 30),
   };
 }
