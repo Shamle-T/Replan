@@ -12,3 +12,4 @@ export * from "./compaction";
 export * from "./diff";
 export * from "./preferredTime";
 export * from "./explain";
+export * from "./replan";
