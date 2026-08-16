@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "dayStart": "06:00",
+  "dayEnd": "24:00",
+  "simulationTime": "08:30",
+  "tasks": [
+    {
+      "id": "lecture",
+      "title": "Algorithms lecture",
+      "description": "FIT lecture on campus",
+      "durationMinutes": 60,
+      "priority": 5,
+      "category": "academic",
+      "fixedStart": "09:00",
+      "fixedEnd": "10:00",
+      "travelMinutesBefore": 10,
+      "location": "Lecture hall",
+      "optional": false,
+      "status": "planned"
+    },
+    {
+      "id": "assignment",
+      "title": "Study for A1",
+      "description": "Focused assignment preparation",
+      "durationMinutes": 90,
+      "priority": 5,
+      "category": "academic",
+      "earliestStart": "10:00",
+      "deadline": "18:00",
+      "optional": false,
+      "status": "planned"
+    },
+    {
+      "id": "lunch",
+      "title": "Lunch",
+      "durationMinutes": 60,
+      "priority": 3,
+      "category": "social",
+      "earliestStart": "12:00",
+      "latestEnd": "14:00",
+      "travelMinutesBefore": 10,
+      "travelMinutesAfter": 10,
+      "location": "Campus cafe",
+      "optional": false,
+      "status": "planned"
+    },
+    {
+      "id": "meeting",
+      "title": "Project meeting",
+      "durationMinutes": 60,
+      "priority": 5,
+      "category": "other",
+      "fixedStart": "14:00",
+      "fixedEnd": "15:00",
+      "travelMinutesBefore": 5,
+      "optional": false,
+      "status": "planned"
+    },
+    {
+      "id": "paper",
+      "title": "Read research paper",
+      "durationMinutes": 60,
+      "priority": 3,
+      "category": "development",
+      "earliestStart": "15:00",
+      "deadline": "20:00",
+      "optional": false,
+      "status": "planned"
+    },
+    {
+      "id": "emails",
+      "title": "Reply to admin emails",
+      "durationMinutes": 30,
+      "priority": 1,
+      "category": "other",
+      "earliestStart": "16:00",
+      "latestEnd": "17:00",
+      "optional": true,
+      "status": "planned"
+    },
+    {
+      "id": "gym",
+      "title": "Gym session",
+      "durationMinutes": 60,
+      "priority": 1,
+      "category": "fitness",
+      "latestEnd": "21:00",
+      "travelMinutesBefore": 10,
+      "location": "Gym",
+      "optional": true,
+      "status": "planned"
+    }
+  ],
+  "schedule": [
+    { "taskId": "lecture", "start": "09:00", "end": "10:00" },
+    { "taskId": "assignment", "start": "10:30", "end": "12:00" },
+    { "taskId": "lunch", "start": "12:30", "end": "13:30" },
+    { "taskId": "meeting", "start": "14:00", "end": "15:00" },
+    { "taskId": "paper", "start": "15:30", "end": "16:30" },
+    { "taskId": "emails", "start": "16:30", "end": "17:00" },
+    { "taskId": "gym", "start": "18:30", "end": "19:30" }
+  ]
+}
