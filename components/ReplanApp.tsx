@@ -440,7 +440,12 @@ export default function ReplanApp() {
       change.type === "TASK_COMPLETED" &&
       currentPlacement &&
       change.actualEnd.getTime() < currentPlacement.end.getTime();
-    const relaxMinutes = finishedEarly ? breakPreference : undefined;
+    const relaxMinutes =
+      finishedEarly || change.type === "TASK_CANCELLED" || change.type === "TASK_SKIPPED"
+        ? finishedEarly
+          ? breakPreference
+          : 0
+        : undefined;
     const result = replanSchedule(tasks, schedule, change, {
       ...schedulerOptions,
       postTaskBreakMinutes: relaxMinutes ?? breakPreference,

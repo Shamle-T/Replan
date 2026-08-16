@@ -254,6 +254,19 @@ export function replanSchedule(
     }
   }
 
+  // A cancelled or skipped task also gives the user an intentional recovery
+  // window. Keep that break before compacting the remaining flexible work.
+  if (
+    result.status === "feasible" &&
+    options.postTaskBreakMinutes !== undefined &&
+    (change.type === "TASK_CANCELLED" || change.type === "TASK_SKIPPED")
+  ) {
+    const preferred = options.postTaskBreakMinutes;
+    if (preferred >= 5) {
+      result = withPostTaskBreak(result, preferred, preferred, options.currentTime);
+    }
+  }
+
   // Final live-replan pass: once the optimizer has chosen a feasible ordering,
   // close every avoidable hole between the remaining flexible tasks. This is
   // deliberately applied after all change types (overrun, early completion,

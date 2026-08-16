@@ -90,7 +90,7 @@ export default function ReplanProposal({
   const applyCustom = () => {
     if (!onRelaxChange) return;
     const parsed = Number(customMinutes);
-    if (!Number.isInteger(parsed) || parsed < 5 || parsed > 15) return;
+    if (!Number.isInteger(parsed) || parsed < 5 || parsed > 60) return;
     onRelaxChange(parsed as PostTaskBreakMinutes);
   };
 
@@ -144,7 +144,7 @@ export default function ReplanProposal({
                   <button
                     key={minutes}
                     type="button"
-                    className={relaxMinutes === minutes ? "active" : ""}
+                  className={relaxMinutes === minutes && customMinutes === "" ? "active" : ""}
                     onClick={() => selectPreset(minutes)}
                   >
                     {minutes} min
@@ -159,7 +159,7 @@ export default function ReplanProposal({
                   inputMode="numeric"
                   type="number"
                   min={5}
-                  max={15}
+                  max={60}
                   step={1}
                   placeholder="5–15"
                   value={customMinutes}
@@ -167,7 +167,7 @@ export default function ReplanProposal({
                     const value = event.target.value;
                     setCustomMinutes(value);
                     const parsed = Number(value);
-                    if (onRelaxChange && Number.isInteger(parsed) && parsed >= 5 && parsed <= 15) {
+                    if (onRelaxChange && Number.isInteger(parsed) && parsed >= 5 && parsed <= 60) {
                       onRelaxChange(parsed as PostTaskBreakMinutes);
                     }
                   }}

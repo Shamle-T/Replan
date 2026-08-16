@@ -43,8 +43,7 @@ export function compactScheduleForward(
     return (
       Boolean(task.fixedStart && task.fixedEnd) ||
       task.status === "completed" ||
-      lockedIds.has(task.id) ||
-      placement.start.getTime() <= options.currentTime.getTime()
+      lockedIds.has(task.id)
     );
   });
 
@@ -106,7 +105,14 @@ export function compactScheduleForward(
     // the normal planning grid. This lets a skip/cancel/early-finish at 10:37
     // immediately reclaim 10:37 rather than waiting until 11:00.
     const candidates = dedupePlacements([exactCandidate, ...generated, original])
-      .filter((candidate) => candidate.start.getTime() <= original.start.getTime())
+      // A newly selected relax window may begin after a preview placement that
+      // was generated at the live boundary. In that case, allow the event to
+      // move later; normal compaction still only moves future events earlier.
+      .filter(
+        (candidate) =>
+          original.start.getTime() < options.currentTime.getTime() ||
+          candidate.start.getTime() <= original.start.getTime(),
+      )
       .filter((candidate) => {
         const occupied = occupiedInterval(candidate, task);
         return occupied.start.getTime() >= earliestOccupiedStart.getTime();

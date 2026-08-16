@@ -44,7 +44,7 @@ interface LiveDayViewProps {
   recentFactChange: ScheduleChange | null;
   onApplyProposal: () => void;
   onDismissProposal: () => void;
-  onRelaxChange?: (minutes: 0 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15) => void;
+  onRelaxChange?: (minutes: number) => void;
 }
 
 export default function LiveDayView({

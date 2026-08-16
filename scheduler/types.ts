@@ -103,7 +103,8 @@ export interface SchedulingOptions {
   weatherWindowsByTaskId?: WeatherWindowsByTaskId;
 }
 
-export type PostTaskBreakMinutes = 0 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+/** A zero-minute immediate start, or a user-selected 5-60 minute break. */
+export type PostTaskBreakMinutes = number;
 
 export interface OptimizationOptions extends SchedulingOptions {
   previousSchedule?: ScheduledTask[];

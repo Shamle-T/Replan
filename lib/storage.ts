@@ -74,7 +74,7 @@ export function saveBreakPreference(minutes: PostTaskBreakMinutes): void {
 export function loadBreakPreference(): PostTaskBreakMinutes {
   if (typeof window === "undefined") return 10;
   const value = Number(window.localStorage.getItem(BREAK_PREFERENCE_KEY));
-  return Number.isInteger(value) && value >= 5 && value <= 15 ? (value as PostTaskBreakMinutes) : 10;
+  return Number.isInteger(value) && value >= 5 && value <= 60 ? (value as PostTaskBreakMinutes) : 10;
 }
 
 function serializeTask(task: Task): PersistedTask {

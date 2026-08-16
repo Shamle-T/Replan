@@ -112,6 +112,29 @@ describe("adaptive replanning", () => {
     expect(result.schedule.some((item) => item.taskId === "a")).toBe(false);
   });
 
+  it("keeps the selected relax window before compacting after a cancellation", () => {
+    const tasks = [
+      task({ id: "cancelled", title: "Cancelled", durationMinutes: 60 }),
+      task({ id: "next", title: "Next", durationMinutes: 60 }),
+    ];
+    const schedule = [
+      { taskId: "cancelled", start: at(10), end: at(11) },
+      { taskId: "next", start: at(12), end: at(13) },
+    ];
+    const result = replanSchedule(
+      tasks,
+      schedule,
+      { type: "TASK_CANCELLED", taskId: "cancelled" },
+      { ...liveOptions, postTaskBreakMinutes: 30 },
+    );
+
+    expect(result.status).toBe("feasible");
+    expect(result.postTaskBreak?.minutes).toBe(30);
+    expect(result.schedule.find((item) => item.taskId === "next")!.start.getTime()).toBe(
+      at(11).getTime(),
+    );
+  });
+
   it("never moves past work", () => {
     const tasks = [
       task({ id: "past", title: "Past", durationMinutes: 60 }),
