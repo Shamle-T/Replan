@@ -8,6 +8,7 @@ import {
   travelMinutesForTask,
   type ScheduleDiffEntry,
   type ScheduledTask,
+  type PostTaskBreak,
   type Task,
 } from "../scheduler";
 import { formatDurationCompact, formatTime, formatTimeRange } from "../lib/time";
@@ -26,6 +27,7 @@ interface DayCalendarProps {
   onTaskClick?: (taskId: string) => void;
   weatherStatusByTaskId?: Record<string, WeatherTaskStatus>;
   highlightDiff?: ScheduleDiffEntry[];
+  postTaskBreak?: PostTaskBreak | null;
 }
 
 const HOUR_HEIGHT = 58;
@@ -42,6 +44,7 @@ export default function DayCalendar({
   onTaskClick,
   weatherStatusByTaskId = {},
   highlightDiff = [],
+  postTaskBreak = null,
 }: DayCalendarProps) {
   const taskMap = new Map(tasks.map((task) => [task.id, task]));
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
@@ -65,8 +68,16 @@ export default function DayCalendar({
     : -1;
   const currentVisible = currentOffset >= 0 && currentOffset <= totalMinutes;
   const openGaps = showOpenTime
-    ? findScheduleGaps(schedule, tasks, dayStart, dayEnd).filter((gap) => gap.minutes > 0)
+    ? findScheduleGaps(schedule, tasks, dayStart, dayEnd)
+        .flatMap((gap) => subtractBreakFromGap(gap, postTaskBreak))
+        .filter((gap) => gap.minutes > 0)
     : [];
+  const visibleBreak = postTaskBreak && postTaskBreak.end.getTime() > displayStart.getTime() && postTaskBreak.start.getTime() < dayEnd.getTime()
+    ? {
+        start: new Date(Math.max(postTaskBreak.start.getTime(), displayStart.getTime())),
+        end: new Date(Math.min(postTaskBreak.end.getTime(), dayEnd.getTime())),
+      }
+    : null;
 
   const topFor = (date: Date) =>
     (((date.getTime() - displayStart.getTime()) / 60_000) / 60) * HOUR_HEIGHT;
@@ -94,6 +105,20 @@ export default function DayCalendar({
           ))}
 
           <div className="calendar-events-layer">
+            {visibleBreak ? (
+              <div
+                className="calendar-post-task-break"
+                style={{
+                  top: `${topFor(visibleBreak.start)}px`,
+                  height: `${Math.max(5, ((visibleBreak.end.getTime() - visibleBreak.start.getTime()) / 60_000 / 60) * HOUR_HEIGHT - 1)}px`,
+                }}
+                aria-label={`Relax break, ${formatTimeRange(visibleBreak.start, visibleBreak.end)}`}
+                title={`Relax break: ${formatTimeRange(visibleBreak.start, visibleBreak.end)}`}
+              >
+                {postTaskBreak?.minutes && postTaskBreak.minutes >= 10 ? <span>{postTaskBreak.minutes}m relax</span> : null}
+              </div>
+            ) : null}
+
             {openGaps.map((gap) => {
               const top = topFor(gap.start);
               const height = Math.max(3, (gap.minutes / 60) * HOUR_HEIGHT - 1);
@@ -378,4 +403,34 @@ function formatDuration(minutes: number): string {
   if (hours === 0) return `${remainder} min`;
   if (remainder === 0) return `${hours}h`;
   return `${hours}h ${remainder}m`;
+}
+
+function subtractBreakFromGap(
+  gap: { start: Date; end: Date; minutes: number },
+  postTaskBreak: PostTaskBreak | null,
+): Array<{ start: Date; end: Date; minutes: number }> {
+  if (!postTaskBreak) return [gap];
+
+  const breakStart = Math.max(gap.start.getTime(), postTaskBreak.start.getTime());
+  const breakEnd = Math.min(gap.end.getTime(), postTaskBreak.end.getTime());
+  if (breakStart >= breakEnd) return [gap];
+
+  const pieces: Array<{ start: Date; end: Date; minutes: number }> = [];
+  if (gap.start.getTime() < breakStart) {
+    const end = new Date(breakStart);
+    pieces.push({
+      start: new Date(gap.start.getTime()),
+      end,
+      minutes: (end.getTime() - gap.start.getTime()) / 60_000,
+    });
+  }
+  if (breakEnd < gap.end.getTime()) {
+    const start = new Date(breakEnd);
+    pieces.push({
+      start,
+      end: new Date(gap.end.getTime()),
+      minutes: (gap.end.getTime() - breakEnd) / 60_000,
+    });
+  }
+  return pieces;
 }

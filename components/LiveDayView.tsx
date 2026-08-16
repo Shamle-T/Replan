@@ -245,6 +245,7 @@ export default function LiveDayView({
             onTaskClick={openEditor}
             weatherStatusByTaskId={weatherStatusByTaskId}
             highlightDiff={proposal?.result.diff ?? []}
+            postTaskBreak={proposal?.result.postTaskBreak ?? activeBreak}
           />
         </section>
       </section>

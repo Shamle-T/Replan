@@ -2499,6 +2499,33 @@ input:disabled { color: #9da0a8; background: #f7f7f9; }
   background-image: repeating-linear-gradient(90deg, transparent 0, transparent 13px, rgba(160,168,181,.16) 13px, rgba(160,168,181,.16) 14px);
 }
 
+/* Live Day relax windows are occupied time, not an unexplained open gap. */
+.calendar-post-task-break {
+  position: absolute;
+  left: 17px;
+  right: 14px;
+  z-index: 4;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-height: 5px;
+  padding: 0 8px;
+  border: 1px solid #9ac7bb;
+  border-radius: 3px;
+  color: #2f7665;
+  background-color: #e8f5f1;
+  background-image: repeating-linear-gradient(90deg, transparent 0, transparent 13px, rgba(47,118,101,.16) 13px, rgba(47,118,101,.16) 14px);
+  pointer-events: none;
+}
+.calendar-post-task-break span { font-family: var(--mono); font-size: 8px; font-weight: 700; }
+.theme-live-dark .calendar-post-task-break {
+  color: #8ed0ba;
+  border-color: #396e5e;
+  background-color: #193027;
+  background-image: repeating-linear-gradient(90deg, transparent 0, transparent 13px, rgba(142,208,186,.16) 13px, rgba(142,208,186,.16) 14px);
+}
+
 .live-actions-time-controls {
   align-items: center;
   flex-wrap: nowrap;
