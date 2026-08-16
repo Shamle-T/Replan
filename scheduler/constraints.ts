@@ -1,4 +1,5 @@
 import { intervalsOverlap, minutesBetween, sortSchedule } from "./slots";
+import { occupiedIntervalsOverlap } from "./occupancy";
 import type {
   ScheduledTask,
   SchedulingOptions,
@@ -160,6 +161,12 @@ export function validateSchedule(
         issues.push({
           code: "OVERLAP",
           message: `${firstTask.title} and ${secondTask.title} overlap.`,
+          taskIds: [first.taskId, second.taskId],
+        });
+      } else if (occupiedIntervalsOverlap(first, firstTask, second, secondTask)) {
+        issues.push({
+          code: "TRAVEL_OVERLAP",
+          message: `${firstTask.title} and ${secondTask.title} do not leave enough time for travel or a requested interval.`,
           taskIds: [first.taskId, second.taskId],
         });
       }
