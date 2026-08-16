@@ -1,3 +1,10 @@
-node_modules/
-coverage/
-dist/
+node_modules
+.next
+out
+coverage
+.core-build
+*.tsbuildinfo
+.DS_Store
+*.log
+.env*
+!.env.example

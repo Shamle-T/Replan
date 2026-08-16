@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": ".core-build",
+    "rootDir": "."
+  },
+  "include": ["scheduler/**/*.ts", "interactions/**/*.ts", "lib/simulation.ts"],
+  "exclude": ["node_modules"]
+}
